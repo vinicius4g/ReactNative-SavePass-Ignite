@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -30,15 +31,37 @@ export function Home() {
 
   async function loadData() {
     const dataKey = '@savepass:logins';
-    // Get asyncStorage data, use setSearchListData and setData
+    
+    const response = await AsyncStorage.getItem(dataKey);
+
+    if(!response) return;
+
+    setSearchListData(JSON.parse(response));
+    setData(JSON.parse(response)); 
   }
 
-  function handleFilterLoginData() {
-    // Filter results inside data, save with setSearchListData
+  function handleFilterLoginData(search: string) {
+    if(!search){
+      loadData()
+    }
+    else if(typeof(search) === 'string'){
+      setSearchListData(oldState => 
+        oldState.filter(
+          item => item.service_name.includes(search)
+        )
+      )
+    }
+    else {
+      Alert.alert("Dados inválidos 😢 !")
+    } 
   }
 
   function handleChangeInputText(text: string) {
-    // Update searchText value
+    if(text){
+      setSearchText(text)
+    } else{
+      setSearchListData(data)
+    }
   }
 
   useFocusEffect(useCallback(() => {
@@ -59,9 +82,8 @@ export function Home() {
           onChangeText={handleChangeInputText}
           value={searchText}
           returnKeyType="search"
-          onSubmitEditing={handleFilterLoginData}
-
-          onSearchButtonPress={handleFilterLoginData}
+          onSubmitEditing={() => handleFilterLoginData(searchText)}
+          onSearchButtonPress={() => handleFilterLoginData(searchText)}
         />
 
         <Metadata>
